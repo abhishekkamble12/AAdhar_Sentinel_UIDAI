@@ -698,17 +698,27 @@ def render_sidebar(df_enrollment: pd.DataFrame, df_demographic: pd.DataFrame):
     # Filters section
     st.sidebar.markdown("### 🎯 Filters")
     
-    states = ["All States"]
-    districts = ["All Districts"]
-    
-    if df_enrollment is not None:
-        states += sorted(df_enrollment['state'].unique().tolist())
+    # SMART STATE LIST - Combine both files
+    states_e = set(df_enrollment['state'].dropna().unique()) if df_enrollment is not None else set()
+    states_d = set(df_demographic['state'].dropna().unique()) if df_demographic is not None else set()
+    all_states = sorted(list(states_e.union(states_d)))
+    states = ["All States"] + [str(s) for s in all_states]
     
     selected_state = st.sidebar.selectbox("Select State", states)
     
-    if selected_state != "All States" and df_enrollment is not None:
-        districts += sorted(df_enrollment[df_enrollment['state'] == selected_state]['district'].unique().tolist())
+    # SMART DISTRICT LIST - Combine both files
+    if selected_state != "All States":
+        # Get districts for this state from both files
+        dist_e = set(df_enrollment[df_enrollment['state'] == selected_state]['district'].dropna().unique()) if df_enrollment is not None else set()
+        dist_d = set(df_demographic[df_demographic['state'] == selected_state]['district'].dropna().unique()) if df_demographic is not None else set()
+        available_districts = sorted(list(dist_e.union(dist_d)))
+    else:
+        # Get ALL districts from both files
+        dist_e = set(df_enrollment['district'].dropna().unique()) if df_enrollment is not None else set()
+        dist_d = set(df_demographic['district'].dropna().unique()) if df_demographic is not None else set()
+        available_districts = sorted(list(dist_e.union(dist_d)))
     
+    districts = ["All Districts"] + available_districts
     selected_district = st.sidebar.selectbox("Select District", districts)
     
     st.sidebar.markdown("---")
